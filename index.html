@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="Prompting ChatGPT for Multimodal Reasoning and Action">
+  <meta name="keywords" content="MM-ReAct, ChatGPT, GPT-4">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MM-ReAct: Prompting ChatGPT for Multimodal Reasoning and Action</title>
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PYVRSFMDRL"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+
+    gtag('js', new Date());
+
+    gtag('config', 'G-PYVRSFMDRL');
+  </script>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="icon" href="./static/images/icon.png">
+  <link rel="stylesheet" href="./static/css/index.css">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/index.js"></script>
+
+  <style>
+		/* Define the grid layout */
+		.mygrid {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			grid-gap: 20px;
+			width: 80%;
+			margin: auto;
+		}
+		.grid_item {
+      background: #FFFFFF;
+      opacity: 1;
+    }
+
+		/* Define the size of the GIFs */
+		.mygif {
+			height: auto;
+			cursor: pointer;
+		}
+		
+		/* Define the modal styles */
+		.modal {
+			display: none;
+			position: fixed;
+			z-index: 1;
+			left: 0;
+			top: 0;
+			width: 100%;
+			height: 100%;
+			overflow: auto;
+			background-color: rgba(0,0,0,0.9);
+		}
+		
+		.modal-content {
+			margin: auto;
+			display: block;
+			width: 80%;
+			max-width: 800px;
+			max-height: 80%;
+		}
+
+    /* Define the full-screen overlay styles */
+		.overlay {
+			position: fixed;
+			z-index: 999;
+			left: 0;
+			top: 0;
+			width: 100%;
+			height: 100%;
+			overflow: hidden;
+			background-color: rgba(0,0,0,0.9);
+			display: none;
+		}
+		
+		.overlay img {
+			width: auto;
+			height: 90%;
+			margin: 0 auto;
+			display: block;
+			max-width: 90%;
+			max-height: 90%;
+		}
+
+    /* Define the video styles */
+		.gifvideo {
+			width: 100%;
+			height: auto;
+		}
+
+		/* Define the progress bar styles */
+		.progress {
+			width: 100%;
+			height: 10px;
+			background-color: #ddd;
+			position: relative;
+		}
+
+		.progress-bar {
+			height: 100%;
+			background-color: #4CAF50;
+			position: absolute;
+			top: 0;
+			left: 0;
+		}
+		
+		/* Define the close button style */
+		.close {
+			color: white;
+			position: absolute;
+			top: 10px;
+			right: 25px;
+			font-size: 35px;
+			font-weight: bold;
+			cursor: pointer;
+		}
+		
+		.close:hover,
+		.close:focus {
+			color: #bbb;
+			text-decoration: none;
+			cursor: pointer;
+		}
+	</style>
+  </head>
+  <body>
+
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">Idea2Img <img src="./static/images/icon.png" alt="Idea2Img" width="60"/></h1>
+          <h2 class="title is-2 publication-title" style="width: 110%; margin-left: -5%">Iterative Self-Refinement with GPT-4V(ision) <br> for Automatic Image Design and Generation </h2>
+          <div class="is-size-5">
+            <span class="author-block">
+              <a href="https://zyang-ur.github.io/" style="color:#00A4EF;font-weight:normal;">Zhengyuan Yang</a>
+            </span>, 
+            <span class="author-block">
+              <a href="http://jianfengwang.me/" style="color:#00A4EF;font-weight:normal;">Jianfeng Wang</a>
+            </span>, 
+            <span class="author-block">
+              <a href="https://scholar.google.com/citations?user=WR875gYAAAAJ&hl=en" style="color:#00A4EF;font-weight:normal;">Linjie Li</a>
+            </span>, 
+            <span class="author-block">
+              <a href="https://sites.google.com/site/kevinlin311tw/me" style="color:#00A4EF;font-weight:normal;">Kevin Lin</a>
+            </span>, 
+            <span class="author-block">
+              <a href="https://www.microsoft.com/en-us/research/people/chunglin/" style="color:#00A4EF;font-weight:normal;">Chung-Ching Lin</a>
+            </span>, 
+            <span class="author-block">
+              <a href="https://www.microsoft.com/en-us/research/people/zliu/" style="color:#00A4EF;font-weight:normal;">Zicheng Liu</a>
+            </span>, 
+            <span class="author-block">
+              <a href="https://www.microsoft.com/en-us/research/people/lijuanw/" style="color:#00A4EF;font-weight:normal;">Lijuan Wang</a>
+            </span>
+          </div>
+
+          <br>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">
+              <!-- <b style="color:#008AD7; font-weight:normal">&#x25B6 </b> -->
+              Microsoft Azure AI</span>
+          </div>
+
+<!--           <div class="is-size-5 publication-authors">
+            <span class="author-block"><sup>*</sup>Equal Technical Contribution, </span>
+            <span class="author-block"><sup>&#x2660;</sup>Project Lead </span>
+           
+          </div> -->
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+              <!-- PDF Link. -->
+              <span class="link-block">
+                <a href="https://arxiv.org/abs/" 
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="ai ai-arxiv"></i>
+                  </span>
+                  <span>arXiv</span>
+                </a>
+              </span>
+              <!-- Code Link. -->
+<!--               <span class="link-block">
+                <a href="https://github.com/microsoft/Idea2Img" target="_blank" 
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-github"></i>
+                  </span>
+                  <span>Code</span>
+                  </a>
+              </span> -->
+              <!-- Demo Link. -->
+              <span class="link-block">
+<!--                 <a href="https://huggingface.co/spaces/microsoft-cognitive-service/mm-react" target="_blank" 
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="far fa-images"></i>
+                  </span>
+                  <span>Live Demo</span>
+                  </a> -->
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="hero teaser">
+  <div class="container is-max-desktop">
+    <div class="hero-body">
+      <a href="images/teaser.pdf" target="popup"> <img id="teaser" width="100%" src="images/teaser.png"></a>
+
+      <h2 class="subtitle has-text-centered">
+        Built upon GPT-4V(ision), Idea2Img is a multimodal iterative self-refinement system that enhances any T2I model for automatic image design and generation, enabling various new image creation functionalities with better image qualities. <a href="images/teaser.pdf" target="popup">Click for zooming up.</a>
+      </h2>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- Abstract. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            We introduce “Idea to Image”, a system that enables multimodal iterative self-refinement with GPT-4V(ision) for automatic image design and generation. Humans can quickly identify the characteristics of different text-to-image (T2I) models via iterative explorations. This enables them to efficiently convert their high-level generation ideas into effective T2I prompts that can produce good images. We investigate if systems based on large multimodal models (LMMs) can develop analogous multimodal self-refinement abilities that enable exploring unknown models or environments via self-refining tries. Idea2Img cyclically generates revised T2I prompts to synthesize draft images, and provides directional feedback for prompt revision, both conditioned on its memory of the probed T2I model’s characteristics. The iterative self-refinement brings Idea2Img various advantages over base T2I models. Notably, Idea2Img can process input ideas with interleaved image-text sequences, follow ideas with design instructions, and generate images of better semantic and visual qualities. The user preference study validates the efficacy of multimodal iterative self-refinement on automatic image design and generation.
+          </p>
+        </div>
+      </div>
+    </div>
+    <!--/ Abstract. -->
+    <br>
+    <br>
+    <!-- Paper Model. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-six-fifths">
+        <h2 class="title is-3">Idea2Img Design</h2>
+        <div class="content has-text-justified">
+          <p>
+            <b>Idea2Img involves an LMM, GPT-4V(ision), interacting with a T2I model to probe its usage for automatic image design and generation. Idea2Img takes GPT-4V for improving, assessing, and verifying multimodal contents.</b>
+          </p>
+          <ul>
+            <ol type="1">
+            <li> <b>Revised Prompt Generation (Improving)</b>: Idea2Img generates N text prompts that correspond to the input multimodal user IDEA, conditioned on the previous text feedback and refinement history. </li>
+            <li> <b>Draft Image Selection (Assessing)</b>: Idea2Img carefully compares N draft images for the same IDEA and select the most promising one. </li>
+            <li> <b>Feedback Reflection (Verifying)</b>: Idea2Img examines the discrepancy between the draft image and the IDEA. Idea2Img then provides feedback on what is incorrect, the plausible causes, and how T2I prompts may be revised to obtain a better image. </li>
+            </ol>
+          </ul>
+        </div>        
+        <!-- <img id="model" width="100%" src="images/model_figure_2.gif"> -->
+        <img id="model" width="70%" src="images/model_figure.png">
+        <h2 class="subtitle has-text-centered">
+        <p class="has-text-centered">
+          Idea2Img framework enables LMMs to mimic humanlike exploration to use a T2I model, enabling the design and generation of an imagined image specified as a multimodal input IDEA.
+        </p> 
+        </h2>
+      </div>
+    </div>
+    <br>
+    <br>
+    <!-- Paper Model. -->
+    
+    <!-- Paper Model 2. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-six-fifths">
+        <h2 class="title is-3">Idea2Img's Full Execution Flow</h2>
+        <div class="content has-text-justified">
+          <p>
+            We overview of the Idea2Img’s full execution flow blow. More details can be found in our paper.<br>
+            Idea2Img applies LMMs functioning in different roles to refine the T2I prompts. Specifically, they will (1) generate and revise text prompts for the T2I model, (2) select the best draft images, and (3) provide feedback on the errors and revision directions. Idea2Img is enhanced with a memory module that stores all prompt exploration histories, including previous draft images, text prompts, and feedback.
+          </p>
+        </div>        
+        <!-- <img id="model" width="60%" src="images/figure_3.gif"> -->
+        <img id="model" width="100%" src="images/arch.png">
+        <h2 class="subtitle has-text-centered">
+        <p class="has-text-centered">
+          Flow chart of Idea2Img’s full execution flow. 
+        </p>        
+        </h2>
+        </div>
+      </div>
+    </div>
+    <br>
+    <br>
+    <br>
+    <!-- Paper Model 2. -->
+
+    <!-- Paper video. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-six-fifths">
+        <h2 class="title is-3">Generation Results</h2>
+        <h3 class="subtitle has-text-centered">
+            <br>
+            Click each panel below for the zoomed in view.
+        </h3>  
+        <br>
+        <!-- <div class="column is-six-fifths mygrid" > -->
+        <div style="text-align: center;">
+          <a href="images/main_sdxl.pdf" target="popup"> <img width="665px" src="images/main_sdxl.png"></a>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+          <a href="images/main_sdxlimg2img.pdf" target="popup"> <img width="700px" src="images/main_sdxlimg2img.png"></a>
+        </div>
+        
+        <!-- <div id="myModal" class="modal">
+          <span class="close">&times;</span>
+          <img class="modal-content" id="modalImg">
+        </div> -->
+        <div id="overlay" class="overlay">
+          <span class="close">&times;</span>
+          <div id="overlayContent"></div>
+        </div>
+      </div>
+    </div>
+    <br>
+    <br>       
+    <!-- Paper video. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-six-fifths">
+        <h2 class="title is-3">GPT-4V(ision) Outputs</h2>
+        <h3 class="subtitle has-text-centered">
+            <br>
+            Click each panel below for the zoomed in view.<br> From left to right, for GPT-4V feedback reflection, revised prompt generation, and draft image selection.
+        </h3>  
+        <br>
+        <!-- <div class="column is-six-fifths mygrid" > -->
+        <div style="text-align: center;">
+          <a href="images/gpt4_prompt.pdf" target="popup"> <img width="500px" src="images/gpt4_prompt.png"></a>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+          <a href="images/gpt4_revise.pdf" target="popup"> <img width="552px" src="images/gpt4_revise.png"></a>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+          <a href="images/gpt4_select.pdf" target="popup"> <img width="543px" src="images/gpt4_select.png"></a>
+        </div>
+        <h2 class="subtitle has-text-centered">
+        <p class="has-text-centered">
+          Feedback Reflection &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+          Revised Prompt Generation &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+          Draft Image selection 
+        </p>        
+        </h2>
+
+        <!-- <div id="myModal" class="modal">
+          <span class="close">&times;</span>
+          <img class="modal-content" id="modalImg">
+        </div> -->
+        <div id="overlay" class="overlay">
+          <span class="close">&times;</span>
+          <div id="overlayContent"></div>
+        </div>
+      </div>
+    </div>
+    <br>
+    <br>  
+  </div>
+</section>
+
+
+<!-- <section class="section">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-six-fifths">
+        <h2 class="title is-3">Results</h2>      
+        </div>
+      </div>
+    </div>
+  <div class="container is-max-desktop">
+
+    <div class="columns is-centered">
+      <div class="column is-full-width">
+        <h2 class="title is-3">Zero-Shot Segmentation</h2>
+        <img id="teaser" width="120%" src="images/zero-shot-generic-image-segmentation.png">
+        <h3 class="subtitle has-text-centered">
+          Zero-shot semantic segmentation with pretrained X-Decoder on 10 settings of 7 datasets.
+        </h3>                 
+      </div>
+    </div>
+
+  </div>
+</section> -->
+
+
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title">BibTeX</h2>
+    <pre><code>
+@article{yang2023idea2img,
+  author      = {Zhengyuan Yang and Jianfeng Wang and Linjie Li and Kevin Lin and Chung-Ching Lin and Zicheng Liu and Lijuan Wang},
+  title       = {Idea2Img: Iterative Self-Refinement with GPT-4V(ision) for Automatic Image Design and Generation},
+  publisher   = {arXiv},
+  year        = {2023},
+}
+</code></pre>
+  </div>
+</section>
+
+<section class="section" id="Acknowledgement">
+  <div class="container is-max-desktop content">
+    <h2 class="title">Acknowledgement</h2>
+    <p>We are deeply grateful to OpenAI for providing access to <a href="https://cdn.openai.com/contributions/gpt-4v.pdf" target="popup">their exceptional tool</a>. We also extend heartfelt thanks to our Microsoft colleagues for their insights, with special acknowledgment to Faisal Ahmed, Ehsan Azarnasab, and Lin Liang for their constructive feedback.
+    </p>
+    <br>
+    <br>
+    <p>
+      This website is adapted from <a
+      href="https://github.com/nerfies/nerfies.github.io">Nerfies</a>, licensed under a <a rel="license"
+                                          href="http://creativecommons.org/licenses/by-sa/4.0/">Creative
+      Commons Attribution-ShareAlike 4.0 International License</a>.
+    </p>
+  </div>
+</section>
+
+
+<script>
+  $(".grid_item").hover(function () {
+    $(this).css("background", "#f2f1f1");
+    }, 
+    function () {
+        $(this).css("background", "#FFFFFF"); 
+    });
+
+  // Get the modal element
+  // var modal = document.getElementById("myModal");
+  var overlay = document.getElementById("overlay");
+  var span = document.getElementsByClassName("close")[0];
+
+
+  // Get the image element and the close button element
+  //  // display the GIF as it is
+  // var img = document.getElementById("modalImg");
+  // var img = document.getElementById("overlayImg");
+  // Add event listeners to each GIF element
+  var gifs = document.getElementsByClassName("mygif");
+  for (var i = 0; i < gifs.length; i++) {
+  gifs[i].addEventListener("click", function() {
+      //  // display the GIF as it is
+      // // Set the modal image source and display the modal
+      // img.src = this.src;
+
+      // display the GIF as a new image, will play from the begining
+      var img = document.createElement("img");
+      img.src = this.src.replace(".png", ".gif");
+
+      // Add the img element to the overlay content and display the overlay
+      document.getElementById("overlayContent").appendChild(img);
+      
+
+      // modal.style.display = "block";
+      overlay.style.display = "block";
+
+      // Hide the body overflow
+              document.body.style.overflow = "hidden";
+  });
+  }
+
+  // Add event listener to close button
+  span.addEventListener("click", function() {
+  // Remove the img element from the overlay content, hide the overlay, and restore the body overflow
+          document.getElementById("overlayContent").innerHTML = "";
+
+  // Hide the modal
+  // modal.style.display = "none";
+  overlay.style.display = "none";
+  document.body.style.overflow = "auto";
+  });
+</script>
+</body>
+</html>
